@@ -1,0 +1,34 @@
+services:
+  app2:
+    build: 
+      context: MicroServiceUserData
+      target: builder
+    ports:
+      - 8080:8080
+    environment:
+      - POSTGRES_DB=microserviceuserdata
+    networks:
+      - microservicewallet
+  
+  db:
+    image: postgres:16
+    secrets:
+      - postgres-password
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - microservicewallet
+    environment:
+      - POSTGRES_DB=microserviceuserdata
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
+    ports:
+      - 5432:5432
+    
+volumes:
+  postgres-data:
+
+secrets:
+  postgres-password:
+    file: postgres/password.txt
+networks:
+  microservicewallet:
