@@ -12,7 +12,7 @@ public class UsuarioDao {
         usuario.setEmail(email);
         Example<ModelUsuario> usuarioExample = Example.of(usuario);
         List<ModelUsuario> res = repo.findAll(usuarioExample);
-        return res;
+        return res; 
     }
 
 }
