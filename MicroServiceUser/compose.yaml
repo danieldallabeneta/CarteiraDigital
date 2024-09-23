@@ -11,7 +11,7 @@ services:
       - microservicewallet
   
   db:
-    image: postgres:16
+    image: postgres:latest
     secrets:
       - postgres-password
     volumes:
