@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM python:3.10-alpine AS builder
 
-WORKDIR /app1
+WORKDIR /app3
 
 COPY requirements.txt .
 
