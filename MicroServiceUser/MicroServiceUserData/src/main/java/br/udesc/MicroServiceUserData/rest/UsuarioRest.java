@@ -2,13 +2,16 @@ package br.udesc.MicroServiceUserData.rest;
 
 import br.udesc.MicroServiceUserData.jpa.PasswordEncoder;
 import br.udesc.MicroServiceUserData.jpa.UsuarioRepository;
+import br.udesc.MicroServiceUserData.model.HashDateSingleton;
 import br.udesc.MicroServiceUserData.model.ModelCredencial;
 import br.udesc.MicroServiceUserData.model.ModelUsuario;
 import br.udesc.MicroServiceUserData.model.ModelUsuarioAuxiliar;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class UsuarioRest {
@@ -31,7 +34,7 @@ public class UsuarioRest {
     }
 
     @PostMapping("/users")
-    public Integer createUser(@Valid @RequestBody ModelUsuarioAuxiliar user) {
+    public Integer createUser(@Valid @RequestBody ModelUsuarioAuxiliar user) throws Exception {
         Optional<ModelUsuario> aux = usuarioRepository.findByEmail(user.getEmail());
 
         if (aux.isEmpty()) {
@@ -46,10 +49,11 @@ public class UsuarioRest {
             usuario.setSalt(encript[1]);
             ModelUsuario savedUser = usuarioRepository.save(usuario);
 
+            HashDateSingleton.getInstance().addHashDate(savedUser.getSalt(), LocalDateTime.now());
+
             return savedUser.getId();
         }
-
-        return aux.get().getId();
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuário já existente");
     }
 
     @GetMapping("/users")
@@ -60,24 +64,47 @@ public class UsuarioRest {
     @GetMapping("/users/{id}")
     public ModelUsuario getUser(@PathVariable int id) throws Exception {
         Optional<ModelUsuario> user = usuarioRepository.findById(id);
+
         if (user.isEmpty()) {
-            throw new Exception("Erro: Id do usuário não encontrado");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
         }
-        return user.get();
+        HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+        boolean logado = hashValidation.validaHash(user.get().getSalt());
+        if(logado){
+            return user.get();
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
+        
     }
 
     @GetMapping("/usuario/{email}")
     public ModelUsuario getUserByEmail(@PathVariable String email) throws Exception {
         Optional<ModelUsuario> user = usuarioRepository.findByEmail(email);
         if (user.isEmpty()) {
-            throw new Exception("Erro: Id do usuário não encontrado");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
         }
-        return user.get();
+        HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+        boolean logado = hashValidation.validaHash(user.get().getSalt());
+        if(logado){
+            return user.get();
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
     }
 
     @DeleteMapping("/users/{id}")
-    public void deleteUser(@PathVariable int id) {
-        usuarioRepository.deleteById(id);
+    public void deleteUser(@PathVariable int id) throws Exception {
+        Optional<ModelUsuario> user = usuarioRepository.findById(id);
+
+        if (user.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
+        }
+
+        HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+        boolean logado = hashValidation.validaHash(user.get().getSalt());
+        if(logado){
+            usuarioRepository.deleteById(id);
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
     }
 
     @PostMapping("/autenticar")
@@ -87,6 +114,13 @@ public class UsuarioRest {
             return false;
         }
         boolean valido = passwordEncoder.checkPassword(credencial.getSenha(), user.get().getPassword());
+        if(valido){
+            HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+            if(hashValidation.containsHash(user.get().getSalt())){
+                hashValidation.removeHash(user.get().getSalt());                
+            };
+            hashValidation.addHashDate(user.get().getSalt(), LocalDateTime.now());
+        }
         return valido;
     }
 
@@ -94,7 +128,7 @@ public class UsuarioRest {
     public ModelUsuario updateUser(@Valid @RequestBody ModelUsuario user) throws Exception {
         List<ModelUsuario> users = usuarioRepository.findAll();
         if(users.isEmpty()){
-            throw new Exception("Não existe usuário cadastrado.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
         }
         Optional<ModelUsuario> aux = usuarioRepository.findById(user.getId());
 
@@ -102,6 +136,13 @@ public class UsuarioRest {
             return new ModelUsuario();
         } 
         ModelUsuario usuario = aux.get();
+        HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+        boolean logado = hashValidation.validaHash(usuario.getSalt());
+
+        if(!logado){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
+        }
+
         if(user.getNome() != null){
             usuario.setNome(user.getNome());
         }
@@ -114,8 +155,21 @@ public class UsuarioRest {
         if(user.getEmail()!= null){
             usuario.setEmail(user.getEmail());
         }
-        return usuarioRepository.save(usuario);
-        
+        return usuarioRepository.save(usuario);        
+    }
+
+    @GetMapping("/aut/{id}")
+    public Boolean authorization(@PathVariable Integer id) throws Exception {
+        Optional<ModelUsuario> aux = usuarioRepository.findById(id);
+        if (aux.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
+        }
+        HashDateSingleton hashValidation = HashDateSingleton.getInstance();
+        boolean logado = hashValidation.validaHash(aux.get().getSalt());
+        if(!logado){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
+        }
+        return logado;
     }
 
 }

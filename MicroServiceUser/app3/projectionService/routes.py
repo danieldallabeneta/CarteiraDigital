@@ -1,10 +1,17 @@
 from flask import Blueprint, jsonify, request
-from .services import generate_projections
+from .services import Services
+from authorization.userAuthorization import UserAuthorization
 
-api = Blueprint('api', __name__)
+auxiliar_bp = Blueprint('aux', __name__)
+services = Services()
+user_authorization = UserAuthorization()
 
-@api.route('/projections', methods=['POST'])
+@auxiliar_bp.route('/projections', methods=['GET'])
 def projections():
-    user = request.json.get('user')
-    projections = generate_projections(user)
+    user = request.args.get('usuario')
+    valido = user_authorization.get_autorizacao_usuario(user)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
+
+    projections = services.generate_projections(user)
     return jsonify(projections)

@@ -1,8 +1,8 @@
 from app.extensions import mongo
 from app.core.ports import MovementRepository
-from app.core.models import Movement
 
 class MongoMovementRepository(MovementRepository):
+    
     def add(self, movement):
         mongo.db.movement.insert_one(movement.to_dict())
     

@@ -58,6 +58,10 @@ class CategoryRepository(ABC):
     def existe_categoria(self, id, usuario):
         pass
 
+    @abstractmethod
+    def find_by_id(self, id):
+        pass
+
 class BillRepository(ABC):
     @abstractmethod
     def add(self, bill):
