@@ -49,5 +49,13 @@ public class HashDateSingleton {
         }
         return false;
     }
+    
+    public void setValidade(long valor){
+        this.validade = valor;
+    }
+    
+    public void resetValidade(){
+        this.validade = 5;
+    }
 
 }
