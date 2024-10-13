@@ -1,27 +1,19 @@
 import pandas as pd
 import statsmodels.api as sm
-import requests
+from wallet.walletServices import WalletServices
+
+wallet_services = WalletServices()
 
 class Services():
 
-    def get_dados_historico(self, user):
-        # URL do microserviço que fornece o histórico de gastos
-        url = "http://api-gateway/app1/movement/get_all?usuario="+user
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"error": "Could not fetch expense data"}
-
     def generate_projections(self, user):
-        history = self.get_dados_historico(user)
+        history = wallet_services.get_dados_historico_user(user)
         
         if "error" in history:
             return history
         
         if not isinstance(history, list) or len(history) == 0:
-            return {"error": "No data available"}
+            return {"error": "Sem histórico de movimentações"}
         
         df = pd.DataFrame(history)
 
@@ -50,3 +42,27 @@ class Services():
             "monthly_average": monthly_expenses.mean(),
             "projections": forecast.tolist()
         }
+    
+    def get_data_graph(self, wallet):
+        data = wallet_services.get_dados_historico_wallet(wallet)
+        if "error" in data:
+            return data
+
+        if not isinstance(data, list) or len(data) == 0:
+            return {"error": "Sem histórico de movimentações"}
+        
+        df = pd.DataFrame(data)
+
+        df['data'] = pd.to_datetime(df['data'])
+        df['month'] = df['data'].dt.to_period('M')
+        df['tipo'] = df['tipo'].map({1: 'entrada', 2: 'saida'})
+        grouped = df.groupby(['month', 'tipo']).agg({'valor': 'sum'}).reset_index()
+
+        result = {}
+        for _, row in grouped.iterrows():
+            month = row['month'].strftime('%Y-%m')
+            if month not in result:
+                result[month] = {'entrada': 0, 'saida': 0}
+            result[month][row['tipo']] = row['valor']
+        
+        return result

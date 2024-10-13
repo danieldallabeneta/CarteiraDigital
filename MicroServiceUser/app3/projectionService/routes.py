@@ -14,4 +14,10 @@ def projections():
         return jsonify({"error": "Usuário não autorizado"}), 401
 
     projections = services.generate_projections(user)
-    return jsonify(projections)
+    return jsonify(projections),200
+
+@auxiliar_bp.route('/graph', methods=['GET'])
+def graph():
+    wallet = request.args.get('wallet')
+    data = services.get_data_graph(wallet)
+    return jsonify(data),200

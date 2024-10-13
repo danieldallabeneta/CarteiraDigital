@@ -9,3 +9,7 @@ class MongoMovementRepository(MovementRepository):
     def get_all_by_user(self, usuario):
         movement_data = mongo.db.movement.find({'usuario': usuario})
         return movement_data if movement_data else None
+    
+    def get_all_by_id_wallet(self, id):
+        movement_data = mongo.db.movement.find({'wallet': id})
+        return movement_data if movement_data else None

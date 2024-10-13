@@ -123,3 +123,6 @@ class MovementService:
     
     def get_all_by_user_id(self, id):
         return self.repository.get_all_by_user(id)
+    
+    def get_all_by_id_wallet(self, id):
+        return self.repository.get_all_by_id_wallet(id)

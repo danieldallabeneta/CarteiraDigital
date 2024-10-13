@@ -133,8 +133,9 @@ public class UsuarioRest {
         Optional<ModelUsuario> aux = usuarioRepository.findById(user.getId());
 
         if (aux.isEmpty()) {
-            return new ModelUsuario();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
         } 
+
         ModelUsuario usuario = aux.get();
         HashDateSingleton hashValidation = HashDateSingleton.getInstance();
         boolean logado = hashValidation.validaHash(usuario.getSalt());
@@ -146,7 +147,7 @@ public class UsuarioRest {
         if(user.getNome() != null){
             usuario.setNome(user.getNome());
         }
-        if(user.getPassword()!= null){
+        if(user.getPassword() != null){
             ModelCredencial cred = new ModelCredencial(usuario.getPassword());
             String[] encript = cred.getSenhaCriptografada();
             usuario.setPassword(encript[0]);

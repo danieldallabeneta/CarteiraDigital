@@ -235,4 +235,76 @@ def payment():
     #atualiza a conta para reduzir a parcela a ser paga
     bill_service.pagar_parcela(bill_data)
 
-    return jsonify(True)
+    return jsonify(True),200
+
+@wallet_bp.route('/transfer', methods=['PUT'])
+def transfer():
+    data = request.json
+    origem = data.get('origem')
+    destino = data.get('destino')
+
+    wallet_origem = wallet_service.get_wallet_by_id(origem)    
+    wallet_destino = wallet_service.get_wallet_by_id(destino)
+
+    if wallet_origem:
+        valido = user_authorization.get_autorizacao_usuario(wallet_origem['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+        
+    if wallet_destino:
+        valido = wallet_origem['usuario'] == wallet_destino['usuario']
+        if not valido:
+            return jsonify({"error": "Carteira de destino não pertence ao usuário da carteira de origem"}), 401
+    else:
+        return jsonify({'error': 'Carteira de destino não encontrada.'}), 404
+
+    valor = data.get('valor')
+
+    if float(wallet_origem['saldo']) < float(valor):
+        return jsonify({"error": "Saldo insuficiente."}), 401
+    
+    wallet_service.remove_found(origem,valor)
+    movement_data = {
+        "type":2,
+        "wallet":origem,
+        "bill": None,
+        "parcela": None,
+        "date": datetime.now(),
+        "value": valor,
+        "usuario": wallet_origem['usuario'],
+        "info": f"Transferência do valor R$ {valor} para a carteira código {destino} - {wallet_destino['nome']}"
+    }
+    #cria a movimentação de saída da carteira
+    movement_service.create_movement(movement_data)
+
+    wallet_service.add_found(destino,valor)
+
+    movement_data = {
+        "type":1,
+        "wallet":destino,
+        "bill": None,
+        "parcela": None,
+        "date": datetime.now(),
+        "value": valor,
+        "usuario": wallet_origem['usuario'],
+        "info": f"Recebido o valor R$ {valor} da carteira código {origem} - {wallet_origem['nome']}"
+    }
+    #cria a movimentação de saída da carteira
+    movement_service.create_movement(movement_data)
+    return jsonify(True),200
+
+@wallet_bp.route('/balace', methods=['GET'])
+def balance():
+    data = request.json
+    wallet = data.get('wallet')
+
+    wallet_origem = wallet_service.get_wallet_by_id(wallet) 
+
+    if wallet_origem:
+        valido = user_authorization.get_autorizacao_usuario(wallet_origem['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+    else:
+         return jsonify({'error': 'Carteira não encontrada.'}), 404
+    
+    return jsonify(wallet_origem['saldo']),200

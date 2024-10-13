@@ -103,3 +103,7 @@ class MovementRepository(ABC):
     @abstractmethod
     def get_all_by_user(self, usuario):
         pass
+
+    @abstractmethod
+    def get_all_by_id_wallet(self, wallet):
+        pass
