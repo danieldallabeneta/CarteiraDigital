@@ -52,7 +52,6 @@ public class UsuarioRestTest {
         assertTrue(savedUser.isPresent());
         assertEquals(testUserAuxiliar.getNome(), savedUser.get().getNome());
         assertEquals(testUserAuxiliar.getEmail(), savedUser.get().getEmail());
-        testUser = savedUser.get();
     }
     
     @Test
@@ -108,6 +107,7 @@ public class UsuarioRestTest {
 
     @Test
     public void autenticar_UsuarioExists() throws Exception {
+        usuarioRest.createUser(testUserAuxiliar);
         boolean valido = usuarioRest.autenticar(testCredencial);
 
         assertTrue(valido);
@@ -123,21 +123,30 @@ public class UsuarioRestTest {
 
     @Test
     public void updateUser_ShouldThrowNotFound_WhenUserNotExists() throws Exception {   
-        ModelUsuario user = testUser.clone();
-        user.setId(0);
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        
+        Optional<ModelUsuario> savedUser = usuarioRepository.findById(createUserId);
+        
+        ModelUsuario user = savedUser.get();
+        user.setNome("Daniel Teste 2");
         user.setEmail("teste@teste.com.br");
+        user.setPassword("123456");
+        HashDateSingleton.getInstance().setValidade(5);
+        ModelUsuario usuarioUpdate = usuarioRest.updateUser(user);
+        
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            usuarioRest.updateUser(user);
-        });
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Usuário não encontrado.", exception.getReason()); 
+        assertEquals(createUserId, usuarioUpdate.getId());
+        assertEquals("Daniel Teste 2", usuarioUpdate.getNome()); 
+        assertEquals("teste@teste.com.br", usuarioUpdate.getEmail()); 
     }
 
     @Test
-    public void updateUser_ShouldThrowUnauthorized_WhenUserExists() throws Exception {   
-        ModelUsuario user = testUser.clone();
+    public void updateUser_ShouldThrowUnauthorized_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        
+        Optional<ModelUsuario> savedUser = usuarioRepository.findById(createUserId);
+        
+        ModelUsuario user = savedUser.get().clone();
         user.setEmail("teste@teste.com.br");
         HashDateSingleton.getInstance().setValidade(0);
 
@@ -148,5 +157,89 @@ public class UsuarioRestTest {
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
         assertEquals("Usuário não autorizado", exception.getReason());  
     }
+    
+    @Test
+    public void updateUser_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        
+        Optional<ModelUsuario> savedUser = usuarioRepository.findById(createUserId);
+        
+        ModelUsuario user = savedUser.get().clone();
+        user.setEmail("teste@teste.com.br");
+        HashDateSingleton.getInstance().setValidade(0);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioRest.updateUser(user);
+        });
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("Usuário não autorizado", exception.getReason());  
+    }
+    
+    @Test
+    public void deleteUser_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        
+        usuarioRest.deleteUser(createUserId);
+        Optional<ModelUsuario> savedUser = usuarioRepository.findById(createUserId);
+        assertFalse(savedUser.isPresent());
+    }
+    
+    @Test
+    public void deleteUser_ShouldThrowUnauthorized_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        HashDateSingleton.getInstance().setValidade(0);
+        
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioRest.deleteUser(createUserId);
+        });
+        
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("Usuário não autorizado", exception.getReason()); 
+    }
+    
+    @Test
+    public void deleteUser_ShouldThrowNotFound_WhenUserNotExists() throws Exception {  
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioRest.deleteUser(0);
+        });
+        
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Usuário não encontrado", exception.getReason()); 
+    }
+    
+    @Test
+    public void authorization_ShouldThrowNotFound_WhenUserNotExists() throws Exception {  
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioRest.authorization(0);
+        });
+        
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Usuário não encontrado", exception.getReason()); 
+    }
+    
+    @Test
+    public void authorization_ShouldThrowUnauthorized_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        HashDateSingleton.getInstance().setValidade(0);
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioRest.authorization(createUserId);
+        });
+        
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("Usuário não autorizado", exception.getReason()); 
+    }
+    
+    @Test
+    public void authorization_WhenUserExists() throws Exception {  
+        Integer createUserId = usuarioRest.createUser(testUserAuxiliar);
+        HashDateSingleton.getInstance().setValidade(5);
+        
+        Boolean valido = usuarioRest.authorization(createUserId);
+        
+        assertTrue(valido);        
+    }
+    
+    
     
 }

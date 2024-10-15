@@ -96,15 +96,16 @@ public class UsuarioRest {
         Optional<ModelUsuario> user = usuarioRepository.findById(id);
 
         if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
         }
 
         HashDateSingleton hashValidation = HashDateSingleton.getInstance();
         boolean logado = hashValidation.validaHash(user.get().getSalt());
         if(logado){
             usuarioRepository.deleteById(id);
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
         }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autorizado");
     }
 
     @PostMapping("/autenticar")

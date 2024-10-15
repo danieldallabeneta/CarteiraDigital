@@ -3,6 +3,7 @@ pymongo==4.5.0
 flask_pymongo
 requests
 pytest
+pytest-cov
 pytest-mock
 mock
 Flask-Testing
