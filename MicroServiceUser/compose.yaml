@@ -106,6 +106,7 @@ services:
       - .:/usr/src
     environment:
       - SONAR_HOST_URL=http://sonarqube:9000
+      - SONAR_LOGIN=SEU_TOKEN_SONARQUBE
     depends_on:
       - sonarqube
     command: ["./wait-for-sonarqube.sh"]   

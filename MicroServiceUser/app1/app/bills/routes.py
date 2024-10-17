@@ -26,12 +26,6 @@ def create_bill():
     if not valido:
         return jsonify({"error": "Usuário não autorizado"}), 401
 
-    if usuario is None:
-        return jsonify({"error": "Informe um usuário responsável."}), 400
-
-    if type is None:
-        return jsonify({"error": "Informe se a conta é Parcelada ou à vista."}), 400
-
     if type == 2:
         if parcela is None:
             return jsonify({"error": "Para as contas parceladas, é necessário informar a quantidade de parcela."}), 400
@@ -101,16 +95,13 @@ def delete_bill():
 
     b_existe_conta = bill_service.existe_conta(id, usuario)
     if not b_existe_conta:
-        return jsonify({"erro": "Conta não encontrada para o usuário."}), 404
+        return jsonify({"error": "Conta não encontrada para o usuário."}), 404
 
     result = bill_service.delete(id)
     if not result:
         return jsonify({'error': 'Conta não encontrada'}), 404
 
-    if result.deleted_count > 0:
-        return jsonify({'message': 'Conta excluída com sucesso'}), 200
-    else:
-        return jsonify({'error': 'Conta não encontrada'}), 404
+    return jsonify({'message': 'Conta excluída com sucesso'}), 200
 
 @bills_bp.route('/all', methods=['GET'])
 def get_all_by_user():
