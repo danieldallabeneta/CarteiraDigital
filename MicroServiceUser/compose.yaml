@@ -105,8 +105,8 @@ services:
     volumes:
       - .:/usr/src
     environment:
-      - SONAR_HOST_URL=http://sonarqube:9000
-      - SONAR_LOGIN=SEU_TOKEN_SONARQUBE
+      - SONAR_HOST_URL=http://localhost:9000
+      - SONAR_LOGIN=squ_1fc18d909505707941e8f35ae68589cc08652025
     depends_on:
       - sonarqube
     command: ["./wait-for-sonarqube.sh"]   

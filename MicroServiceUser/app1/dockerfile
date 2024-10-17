@@ -4,13 +4,6 @@ WORKDIR /app1
 
 RUN apk add --no-cache curl openjdk11 unzip
 
-#RUN curl -L -v -o sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-linux-x64.zip \
-#    && unzip sonarscanner.zip -d /opt/ \
-#    && mv /opt/sonar-scanner-* /opt/sonar-scanner \
-#    && rm sonarscanner.zip
-
-#ENV PATH="/opt/sonar-scanner/bin:${PATH}"
-
 COPY requirements.txt .
 
 RUN --mount=type=cache,target=/root/.cache/pip \
@@ -22,7 +15,5 @@ ENV FLASK_APP=run.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV PYTHONUNBUFFERED=1
 
-#CMD ["python3", "run.py"]
-
-ENTRYPOINT ["sh", "-c", "pytest && python3 run.py"]
-#ENTRYPOINT ["sh", "-c", "pytest --cov=app1 app/tests/ --cov-report=xml --cov-report=html && flask run --host=0.0.0.0"]
+#ENTRYPOINT ["sh", "-c", "pytest && python3 run.py"]
+ENTRYPOINT ["sh", "-c", "pytest --cov=app1 app/tests/ --cov-report=xml --cov-report=html && python3 run.py"]
