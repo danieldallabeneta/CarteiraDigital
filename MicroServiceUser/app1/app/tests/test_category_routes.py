@@ -13,7 +13,6 @@ def client():
     with app.test_client() as client:
         yield client
 
-
 class TestCategoryRoutes:
 
     @patch('app.authorization.userAuthorization.UserAuthorization.get_autorizacao_usuario')
@@ -31,12 +30,10 @@ class TestCategoryRoutes:
         assert response.status_code == 201
         assert response.json is True
 
-        # Testando com dados faltantes
         response = client.post('/category/add', json={"name": "Categoria Teste"})
         assert response.status_code == 400
         assert response.json["error"] == "Todos os campos (nome, usuario) são obrigatórios"
 
-        # Testando usuário não autorizado
         mock_auth.return_value = False
         response = client.post('/category/add', json=data)
         assert response.status_code == 401
@@ -60,12 +57,10 @@ class TestCategoryRoutes:
         assert response.status_code == 201
         assert response.json is True
 
-        # Testando com dados faltantes
         response = client.put('/category/update_category', json={"id": 1})
         assert response.status_code == 400
         assert response.json["error"] == "Os campos de id e name são obrigatórios"
 
-        # Testando usuário não autorizado
         mock_auth.return_value = False
         response = client.put('/category/update_category', json=data)
         assert response.status_code == 401
@@ -84,13 +79,11 @@ class TestCategoryRoutes:
         assert response.status_code == 200
         assert response.json["message"] == "Carteira excluída com sucesso"
 
-        # Testando carteira não encontrada
         mock_delete_category.return_value.deleted_count = 0
         response = client.delete('/category/delete/1')
         assert response.status_code == 404
         assert response.json["error"] == "Carteira não encontrada"
 
-        # Testando usuário não autorizado
         mock_auth.return_value = False
         response = client.delete('/category/delete/1')
         assert response.status_code == 401
@@ -109,12 +102,10 @@ class TestCategoryRoutes:
         assert response.status_code == 200
         assert len(response.json) == 2
 
-        # Testando parâmetro usuário faltante
         response = client.get('/category/get_all')
         assert response.status_code == 400
         assert response.json["error"] == "Parâmetro de usuário é obrigatório"
 
-        # Testando usuário não autorizado
         mock_auth.return_value = False
         response = client.get('/category/get_all?usuario=1')
         assert response.status_code == 401
