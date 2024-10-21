@@ -1,0 +1,6 @@
+projectKey=app3
+serverUrl=http://localhost:9000
+serverVersion=10.6.0.92116
+dashboardUrl=http://localhost:9000/dashboard?id=app3
+ceTaskId=63157a41-9231-491c-b89c-9f79ef17a39b
+ceTaskUrl=http://localhost:9000/api/ce/task?id=63157a41-9231-491c-b89c-9f79ef17a39b

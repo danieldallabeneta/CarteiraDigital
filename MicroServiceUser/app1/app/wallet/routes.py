@@ -4,11 +4,13 @@ from app.movement.adapters import MongoMovementRepository
 from app.bills.adapters import MongoBillRepository
 from app.core.service import WalletService, MovementService, BillService
 from datetime import datetime
+from app.authorization.userAuthorization import UserAuthorization
 
 wallet_bp = Blueprint('wallet', __name__)
 wallet_service = WalletService(MongoWalletRepository())
 movement_service = MovementService(MongoMovementRepository())
 bill_service = BillService(MongoBillRepository())
+user_authorization = UserAuthorization()
 
 @wallet_bp.route('/add_wallet', methods=['POST'])
 def add_wallet():
@@ -18,6 +20,10 @@ def add_wallet():
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Todos os campos (data, nome, usuario, saldo) são obrigatórios"}), 400
     
+    valido = user_authorization.get_autorizacao_usuario(data["usuario"])
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
+
     wallet = wallet_service.create_wallet(data)
     wallet_data = wallet.to_dict()
     wallet_id = wallet_data["wallet"]
@@ -50,6 +56,10 @@ def get_all_wallet():
     except ValueError:
         return jsonify({'error': 'O parâmetro de usuário deve ser um inteiro'}), 400
     
+    valido = user_authorization.get_autorizacao_usuario(usuario)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
+    
     results = wallet_service.get_all_for_user(usuario)
     
     results_list = [{'wallet': doc['wallet'],'date': doc['data'].strftime("%d/%m/%Y"), 'nome': doc['nome'], 'saldo': doc['saldo'], 'usuario': doc['usuario']} for doc in results]
@@ -64,7 +74,7 @@ def add_found():
     data = request.json
     wallet = data.get('id')
     valor_adicao = data.get('valor')
-    # Validar os dados
+    
     if valor_adicao is None or wallet is None:
         return jsonify({'error': 'Os campos de valor e carteira são obrigatórios'}), 400
 
@@ -73,7 +83,15 @@ def add_found():
     except ValueError:
         return jsonify({'error': 'O valor deve ser um número'}), 400
 
+    wallet_register = wallet_service.get_wallet_by_id(wallet)
+
+    if wallet_register:
+        valido = user_authorization.get_autorizacao_usuario(wallet_register['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+
     wallet_data = wallet_service.add_found(wallet,valor_adicao)
+
     if wallet_data.matched_count > 0:
         if wallet_data.modified_count > 0:
             carteira = wallet_service.get_wallet_by_id(wallet)
@@ -110,6 +128,13 @@ def remove_found():
     except ValueError:
         return jsonify({'error': 'Usuário deve ser um inteiro e valor deve ser um número'}), 400
 
+    wallet_register = wallet_service.get_wallet_by_id(wallet)
+
+    if wallet_register:
+        valido = user_authorization.get_autorizacao_usuario(wallet_register['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+
     wallet_data = wallet_service.remove_found(wallet,valor_adicao)
 
     if wallet_data.matched_count > 0:
@@ -135,6 +160,14 @@ def remove_found():
 
 @wallet_bp.route('/delete/<string:wallet>', methods=['DELETE'])
 def delete_wallet(wallet):
+
+    wallet_register = wallet_service.get_wallet_by_id(wallet)
+
+    if wallet_register:
+        valido = user_authorization.get_autorizacao_usuario(wallet_register['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+
     result = wallet_service.delete(wallet)
     
     if not result:
@@ -151,6 +184,14 @@ def payment():
     wallet_data  = data.get('wallet')
     bill_data    = data.get('bill')
     usuario_data = data.get('usuario')
+
+    wallet_register = wallet_service.get_wallet_by_id(usuario_data)
+
+    if wallet_register:
+        valido = user_authorization.get_autorizacao_usuario(wallet_register['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+
     carteira = wallet_service.get_wallet_by_id(wallet_data)
     if carteira:
         if carteira["usuario"] != usuario_data:
@@ -194,4 +235,76 @@ def payment():
     #atualiza a conta para reduzir a parcela a ser paga
     bill_service.pagar_parcela(bill_data)
 
-    return jsonify(True)
+    return jsonify(True),200
+
+@wallet_bp.route('/transfer', methods=['PUT'])
+def transfer():
+    data = request.json
+    origem = data.get('origem')
+    destino = data.get('destino')
+
+    wallet_origem = wallet_service.get_wallet_by_id(origem)    
+    wallet_destino = wallet_service.get_wallet_by_id(destino)
+
+    if wallet_origem:
+        valido = user_authorization.get_autorizacao_usuario(wallet_origem['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+        
+    if wallet_destino:
+        valido = wallet_origem['usuario'] == wallet_destino['usuario']
+        if not valido:
+            return jsonify({"error": "Carteira de destino não pertence ao usuário da carteira de origem"}), 401
+    else:
+        return jsonify({'error': 'Carteira de destino não encontrada.'}), 404
+
+    valor = data.get('valor')
+
+    if float(wallet_origem['saldo']) < float(valor):
+        return jsonify({"error": "Saldo insuficiente."}), 401
+    
+    wallet_service.remove_found(origem,valor)
+    movement_data = {
+        "type":2,
+        "wallet":origem,
+        "bill": None,
+        "parcela": None,
+        "date": datetime.now(),
+        "value": valor,
+        "usuario": wallet_origem['usuario'],
+        "info": f"Transferência do valor R$ {valor} para a carteira código {destino} - {wallet_destino['nome']}"
+    }
+    #cria a movimentação de saída da carteira
+    movement_service.create_movement(movement_data)
+
+    wallet_service.add_found(destino,valor)
+
+    movement_data = {
+        "type":1,
+        "wallet":destino,
+        "bill": None,
+        "parcela": None,
+        "date": datetime.now(),
+        "value": valor,
+        "usuario": wallet_origem['usuario'],
+        "info": f"Recebido o valor R$ {valor} da carteira código {origem} - {wallet_origem['nome']}"
+    }
+    #cria a movimentação de saída da carteira
+    movement_service.create_movement(movement_data)
+    return jsonify(True),200
+
+@wallet_bp.route('/balace', methods=['GET'])
+def balance():
+    data = request.json
+    wallet = data.get('wallet')
+
+    wallet_origem = wallet_service.get_wallet_by_id(wallet) 
+
+    if wallet_origem:
+        valido = user_authorization.get_autorizacao_usuario(wallet_origem['usuario'])
+        if not valido:
+            return jsonify({"error": "Usuário não autorizado"}), 401
+    else:
+         return jsonify({'error': 'Carteira não encontrada.'}), 404
+    
+    return jsonify(wallet_origem['saldo']),200

@@ -5,7 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 @Entity(name = "tbusuario")
-public class ModelUsuario extends ModelUsuarioBase {
+public class ModelUsuario extends ModelUsuarioBase implements Cloneable{
 
     @Id
     @GeneratedValue
@@ -37,6 +37,11 @@ public class ModelUsuario extends ModelUsuarioBase {
 
     public void setSalt(String salt) {
         this.salt = salt;
+    }
+    
+    @Override
+    public ModelUsuario clone() throws CloneNotSupportedException {
+        return (ModelUsuario) super.clone();
     }
 
     @Override
