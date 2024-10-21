@@ -3,10 +3,12 @@ from .adapters import MongoBillRepository
 from app.category.adapters import MongoCategoryRepository
 from app.core.service import BillService, CategoryService
 from datetime import datetime
+from app.authorization.userAuthorization import UserAuthorization
 
 bills_bp = Blueprint('bills', __name__)
 bill_service = BillService(MongoBillRepository())
 category_service = CategoryService(MongoCategoryRepository())
+user_authorization = UserAuthorization()
 
 @bills_bp.route('/add', methods=['POST'])
 def create_bill():
@@ -20,11 +22,9 @@ def create_bill():
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Os campos description, valor_compra, include_date, due_date, type e usuario são obrigatórios"}), 400
 
-    if usuario is None:
-        return jsonify({"error": "Informe um usuário responsável."}), 400
-
-    if type is None:
-        return jsonify({"error": "Informe se a conta é Parcelada ou à vista."}), 400
+    valido = user_authorization.get_autorizacao_usuario(usuario)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
 
     if type == 2:
         if parcela is None:
@@ -51,6 +51,10 @@ def update_bill():
     category = data.get('category')
     valor_compra = data.get('valor_compra')
     usuario = data.get('usuario')
+
+    valido = user_authorization.get_autorizacao_usuario(usuario)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
 
     if id is None:
         return jsonify({"error": "Informe uma conta válida."}), 400
@@ -79,6 +83,10 @@ def delete_bill():
     id   = data.get('id')
     usuario = data.get('usuario')
 
+    valido = user_authorization.get_autorizacao_usuario(usuario)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
+
     if id is None:
         return jsonify({"error": "Informe uma conta válida."}), 400
     
@@ -87,20 +95,21 @@ def delete_bill():
 
     b_existe_conta = bill_service.existe_conta(id, usuario)
     if not b_existe_conta:
-        return jsonify({"erro": "Conta não encontrada para o usuário."}), 404
+        return jsonify({"error": "Conta não encontrada para o usuário."}), 404
 
     result = bill_service.delete(id)
     if not result:
         return jsonify({'error': 'Conta não encontrada'}), 404
 
-    if result.deleted_count > 0:
-        return jsonify({'message': 'Conta excluída com sucesso'}), 200
-    else:
-        return jsonify({'error': 'Conta não encontrada'}), 404
+    return jsonify({'message': 'Conta excluída com sucesso'}), 200
 
 @bills_bp.route('/all', methods=['GET'])
 def get_all_by_user():
     usuario = request.args.get('usuario')
+
+    valido = user_authorization.get_autorizacao_usuario(usuario)
+    if not valido:
+        return jsonify({"error": "Usuário não autorizado"}), 401
 
     if usuario is None:
         return jsonify({'error': 'Parâmetro de usuário é obrigatório'}), 400

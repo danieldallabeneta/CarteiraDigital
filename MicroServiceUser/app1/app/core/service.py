@@ -55,6 +55,9 @@ class CategoryService:
     
     def existe_categoria(self,id,usuario):
         return self.repository.existe_categoria(id,usuario)
+    
+    def get_category_by_id(self, id):
+        return self.repository.find_by_id(id)
 
 class BillService:
     def __init__(self, repository: BillRepository):
@@ -117,3 +120,9 @@ class MovementService:
         movement_data = Movement(type,wallet,bill,parcela,date,value,usuario,info)
         self.repository.add(movement_data)
         return movement_data
+    
+    def get_all_by_user_id(self, id):
+        return self.repository.get_all_by_user(id)
+    
+    def get_all_by_id_wallet(self, id):
+        return self.repository.get_all_by_id_wallet(id)

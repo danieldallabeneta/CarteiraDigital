@@ -58,6 +58,10 @@ class CategoryRepository(ABC):
     def existe_categoria(self, id, usuario):
         pass
 
+    @abstractmethod
+    def find_by_id(self, id):
+        pass
+
 class BillRepository(ABC):
     @abstractmethod
     def add(self, bill):
@@ -98,4 +102,8 @@ class MovementRepository(ABC):
 
     @abstractmethod
     def get_all_by_user(self, usuario):
+        pass
+
+    @abstractmethod
+    def get_all_by_id_wallet(self, wallet):
         pass

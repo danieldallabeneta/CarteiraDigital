@@ -8,8 +8,6 @@ RUN mvn dependency:go-offline
 
 WORKDIR /app2
 
-RUN mvn clean package
-
-EXPOSE 8080
+RUN mvn clean package -DskipTests
 
 CMD [ "java", "-jar",  "/app2/target/MicroServiceUserData-0.0.1-SNAPSHOT.jar"]

@@ -43,7 +43,10 @@ class MongoBillRepository(BillRepository):
     
     def delete(self, bill):
         result = mongo.db.bills.delete_one({"bill": bill})
-        return result if result else None
+        if result.deleted_count > 0:
+            return result
+        else:
+            return None
 
     def get_all_by_user_id(self, id):
         bill_data = mongo.db.bills.find({'usuario': id})

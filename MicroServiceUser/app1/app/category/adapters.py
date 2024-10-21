@@ -46,3 +46,9 @@ class MongoCategoryRepository(CategoryRepository):
         category_data = mongo.db.category.find({"category": id, "usuario": usuario})
         registro = list(category_data)
         return True if registro else False
+    
+    def find_by_id(self, id):
+        category_data = mongo.db.category.find({"category": id})
+        if not category_data:
+            raise ValueError("Categoria não encontrada.")
+        return category_data
