@@ -1,4 +1,5 @@
 from flask import Flask
+
 from .config import Config
 from .extensions import init_extensions
 from .wallet import init_wallet  

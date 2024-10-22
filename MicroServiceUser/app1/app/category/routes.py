@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+from flasgger import swag_from
+
 from .adapters import MongoCategoryRepository
 from app.core.service import CategoryService
 from app.authorization.userAuthorization import UserAuthorization
@@ -8,6 +10,7 @@ category_service = CategoryService(MongoCategoryRepository())
 user_authorization = UserAuthorization()
 
 @category_bp.route('/add', methods=['POST'])
+@swag_from('category_documentation.yml', validation=True)
 def add_category():
     data = request.json
     
