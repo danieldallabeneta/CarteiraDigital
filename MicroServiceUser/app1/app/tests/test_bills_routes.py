@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 from flask import Flask
 from ..bills import init_bills
-from ..core.models import Bill, Category
+from ..core.models import Bill
 
 @pytest.fixture
 def client():

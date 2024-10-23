@@ -16,15 +16,18 @@ def add_category():
     
     required_fields = ["name", "usuario"]
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "Todos os campos (nome, usuario) são obrigatórios"}), 400
+        return jsonify({"error":"Todos os campos (nome, usuario) são obrigatórios"}), 400
 
     valido = user_authorization.get_autorizacao_usuario(data['usuario'])
     if not valido:
         return jsonify({"error": "Usuário não autorizado"}), 401
-
+        
     category = category_service.create_category(data)
 
-    return jsonify(True) if category else jsonify(False), 201
+    if category:
+        return jsonify({"message": "Registro inserido com sucesso"}), 201 
+    else:
+        return jsonify({"message": "Registro não inserido"}), 404
 
 @category_bp.route('/update_category', methods=['PUT'])
 def update_category():
