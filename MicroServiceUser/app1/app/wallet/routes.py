@@ -1,4 +1,7 @@
+import os
 from flask import Blueprint, jsonify, request
+from flasgger import swag_from
+
 from .adapters import MongoWalletRepository
 from app.movement.adapters import MongoMovementRepository
 from app.bills.adapters import MongoBillRepository
@@ -13,6 +16,74 @@ bill_service = BillService(MongoBillRepository())
 user_authorization = UserAuthorization()
 
 @wallet_bp.route('/add_wallet', methods=['POST'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Adicionar uma nova carteira',
+    'description': 'Cria uma nova carteira com os dados fornecidos.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'data': {
+                        'type': 'string',
+                        'format': 'date',
+                        'description': 'Data de criação da carteira'
+                    },
+                    'nome': {
+                        'type': 'string',
+                        'description': 'Nome da carteira'
+                    },
+                    'saldo': {
+                        'type': 'number',
+                        'format': 'float',
+                        'description': 'Saldo inicial da carteira'
+                    },
+                    'usuario': {
+                        'type': 'integer',
+                        'description': 'ID do usuário que está criando a carteira'
+                    }
+                },
+                'required': ['data', 'nome', 'saldo', 'usuario']
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Carteira criada com sucesso',
+            'schema': {
+                'type': 'boolean'
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios não fornecidos',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        }
+    }
+})
 def add_wallet():
     data = request.json
     
@@ -43,6 +114,91 @@ def add_wallet():
     return jsonify(True) if wallet else jsonify(False), 201
 
 @wallet_bp.route('/get_all', methods=['GET'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Obter todas as carteiras de um usuário',
+    'description': 'Retorna todas as carteiras associadas ao usuário fornecido.',
+    'parameters': [
+        {
+            'name': 'usuario',
+            'in': 'query',
+            'required': True,
+            'type': 'integer',
+            'description': 'ID do usuário cujas carteiras devem ser retornadas'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Lista de carteiras do usuário',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'wallet': {
+                            'type': 'string',
+                            'description': 'ID da carteira'
+                        },
+                        'date': {
+                            'type': 'string',
+                            'format': 'date',
+                            'description': 'Data de criação da carteira'
+                        },
+                        'nome': {
+                            'type': 'string',
+                            'description': 'Nome da carteira'
+                        },
+                        'saldo': {
+                            'type': 'number',
+                            'format': 'float',
+                            'description': 'Saldo da carteira'
+                        },
+                        'usuario': {
+                            'type': 'integer',
+                            'description': 'ID do usuário associado à carteira'
+                        }
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, parâmetro de usuário não fornecido',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Nenhum registro encontrado para o usuário fornecido',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'description': 'Mensagem de aviso'
+                    }
+                }
+            }
+        }
+    }
+})
 def get_all_wallet():
     # Obtendo o valor do parâmetro 'usuario' da URL
     usuario = request.args.get('usuario')
@@ -70,6 +226,83 @@ def get_all_wallet():
         return jsonify({'message': 'Nenhum registro encontrado para o usuário fornecido'}), 404
 
 @wallet_bp.route('/add_found', methods=['PUT'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Adicionar valor à carteira',
+    'description': 'Adiciona um valor ao saldo de uma carteira existente.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'id': {
+                        'type': 'string',
+                        'description': 'ID da carteira'
+                    },
+                    'valor': {
+                        'type': 'number',
+                        'format': 'float',
+                        'description': 'Valor a ser adicionado à carteira'
+                    }
+                },
+                'required': ['id', 'valor']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Saldo atualizado com sucesso',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'description': 'Mensagem de confirmação'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios não fornecidos',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def add_found():
     data = request.json
     wallet = data.get('id')
@@ -114,6 +347,83 @@ def add_found():
         return jsonify({'error': 'Usuário não encontrado'}), 404
     
 @wallet_bp.route('/remove_found', methods=['PUT'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Remover valor da carteira',
+    'description': 'Remove um valor do saldo de uma carteira existente.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'id': {
+                        'type': 'string',
+                        'description': 'ID da carteira'
+                    },
+                    'valor': {
+                        'type': 'number',
+                        'format': 'float',
+                        'description': 'Valor a ser removido da carteira'
+                    }
+                },
+                'required': ['id', 'valor']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Saldo atualizado com sucesso',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'description': 'Mensagem de confirmação'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios não fornecidos',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def remove_found():
     data = request.json
     wallet = data.get('id')
@@ -159,6 +469,58 @@ def remove_found():
         return jsonify({'error': 'Usuário não encontrado'}), 404
 
 @wallet_bp.route('/delete/<string:wallet>', methods=['DELETE'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Excluir uma carteira',
+    'description': 'Remove uma carteira do sistema.',
+    'parameters': [
+        {
+            'name': 'wallet',
+            'in': 'path',
+            'required': True,
+            'type': 'string',
+            'description': 'ID da carteira a ser excluída'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Carteira excluída com sucesso',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'description': 'Mensagem de confirmação'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def delete_wallet(wallet):
 
     wallet_register = wallet_service.get_wallet_by_id(wallet)
@@ -179,6 +541,80 @@ def delete_wallet(wallet):
         return jsonify({'error': 'Carteira não encontrada'}), 404
 
 @wallet_bp.route('/payment', methods=['PUT'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Realizar pagamento de uma conta',
+    'description': 'Realiza o pagamento de uma conta utilizando o saldo de uma carteira.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'wallet': {
+                        'type': 'string',
+                        'description': 'ID da carteira a ser usada para o pagamento'
+                    },
+                    'bill': {
+                        'type': 'string',
+                        'description': 'ID da conta a ser paga'
+                    },
+                    'usuario': {
+                        'type': 'integer',
+                        'description': 'ID do usuário que está realizando o pagamento'
+                    }
+                },
+                'required': ['wallet', 'bill', 'usuario']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Pagamento realizado com sucesso',
+            'schema': {
+                'type': 'boolean'
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, condições de pagamento não atendidas',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira ou conta não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def payment():
     data = request.json
     wallet_data  = data.get('wallet')
@@ -238,6 +674,81 @@ def payment():
     return jsonify(True),200
 
 @wallet_bp.route('/transfer', methods=['PUT'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Transferir valor entre carteiras',
+    'description': 'Transfere um valor de uma carteira para outra.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'origem': {
+                        'type': 'string',
+                        'description': 'ID da carteira de origem'
+                    },
+                    'destino': {
+                        'type': 'string',
+                        'description': 'ID da carteira de destino'
+                    },
+                    'valor': {
+                        'type': 'number',
+                        'format': 'float',
+                        'description': 'Valor a ser transferido'
+                    }
+                },
+                'required': ['origem', 'destino', 'valor']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Transferência realizada com sucesso',
+            'schema': {
+                'type': 'boolean'
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, condições de transferência não atendidas',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado ou saldo insuficiente',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira de destino não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def transfer():
     data = request.json
     origem = data.get('origem')
@@ -294,6 +805,62 @@ def transfer():
     return jsonify(True),200
 
 @wallet_bp.route('/balace', methods=['GET'])
+@swag_from({
+    'tags': ['Carteira'],
+    'summary': 'Obter saldo da carteira',
+    'description': 'Retorna o saldo atual de uma carteira.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'wallet': {
+                        'type': 'string',
+                        'description': 'ID da carteira para a qual se deseja obter o saldo'
+                    }
+                },
+                'required': ['wallet']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Saldo da carteira obtido com sucesso',
+            'schema': {
+                'type': 'number',
+                'format': 'float',
+                'description': 'Saldo da carteira'
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Carteira não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def balance():
     data = request.json
     wallet = data.get('wallet')
