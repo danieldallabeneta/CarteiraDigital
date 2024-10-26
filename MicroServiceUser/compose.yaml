@@ -66,14 +66,14 @@ services:
   app3:
     build:
       context: app3
-      target: builder   
+      target: builder 
     depends_on:
       - app1
       - app2  
     networks:
       - microservicewallet 
     ports:
-      - "5002:5000"     
+      - "5010:5010"     
   
   api-gateway:
     image: nginx:latest
