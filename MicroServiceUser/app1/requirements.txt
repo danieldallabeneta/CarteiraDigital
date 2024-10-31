@@ -8,3 +8,4 @@ pytest-mock
 mock
 Flask-Testing
 Flasgger==0.9.7.1
+prometheus_flask_exporter
