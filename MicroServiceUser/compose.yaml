@@ -12,22 +12,6 @@ services:
       - POSTGRES_DB=microserviceuserdata
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
 
-  init_db:
-    image: postgres:latest
-    secrets:
-      - postgres-password
-    volumes:
-      - ./postgres-data-sonar:/var/lib/postgresql/data
-    networks:
-      - microservicewallet  
-    depends_on:
-      - db
-    environment:      
-      - POSTGRES_DB=sonar
-      - POSTGRES_PASSWORD=admin
-    
-    command: ["sh", "-c", "until pg_isready -h db; do sleep 1; done; PGPASSWORD=admin psql -h db -U postgres -d microserviceuserdata -c 'CREATE DATABASE sonar;'"]    
-
   app2:
     build: 
       context: MicroServiceUserData
@@ -75,74 +59,21 @@ services:
     ports:
       - "5010:5010"     
   
-  api-gateway:
-    image: nginx:latest
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - 80:80
-    networks:
-      - microservicewallet  
-    depends_on:
-      - app1
-      - app2 
-
-  sonarqube:
-    image: sonarqube:latest
-    ports:
-      - "9000:9000" 
-    networks:
-      - microservicewallet
-    environment:
-      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
-      - SONAR_JDBC_USERNAME=postgres 
-      - SONAR_JDBC_PASSWORD=admin
-    volumes:
-      - ./sonar/sonarqube_data:/opt/sonarqube/data
-      - ./sonar/sonarqube_conf:/opt/sonarqube/conf
-      - ./sonar/sonarqube_bundles:/opt/sonarqube/bundles
-    depends_on:
-      - app1
-      - app2
-      - app3   
-
-  sonarscanner:
-    image: sonarsource/sonar-scanner-cli
-    volumes:
-      - .:/usr/src
-    environment:
-      - SONAR_HOST_URL=http://localhost:9000
-      - SONAR_LOGIN=squ_1fc18d909505707941e8f35ae68589cc08652025
-    depends_on:
-      - sonarqube
-    command: ["./wait-for-sonarqube.sh"]   
-    networks:
-      - microservicewallet
-
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/data:/prometheus
-    # restart: always  
-    ports:
-      - "9090:9090"    
-    # command:
-    #   - '--config.file=/etc/prometheus/prometheus.yml'
-    #   - '--storage.tsdb.path=/prometheus'
-    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-    #   - '--web.console.templates=/usr/share/prometheus/consoles'  
-    networks:
-      - microservicewallet  
+  # gateway:
+  #   image: nginx:latest
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #   ports:
+  #     - 80:80
+  #   networks:
+  #     - microservicewallet  
+  #   depends_on:
+  #     - app1
+  #     - app2 
 
 volumes:
   postgres-data:
-  mongo-data:
-  sonar-data:
-  sonar-logs:
-  sonar-extensions:
-  prometheus:
-
+  mongo-data:  
 secrets:
   postgres-password:
     file: postgres/password.txt

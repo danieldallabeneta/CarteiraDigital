@@ -1,8 +1,4 @@
-from flask import Flask
 from .routes import auxiliar_bp
 
-def create_app():
-    app = Flask(__name__)
-
-    app.register_blueprint(auxiliar_bp, url_prefix='/aux')
-    return app
+def create_app(app):
+    app.register_blueprint(auxiliar_bp, url_prefix='/aux')    

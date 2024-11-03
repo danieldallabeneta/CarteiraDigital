@@ -1,4 +1,4 @@
-from flask import Flask
+# from flask import Flask
 
 from .config import Config
 from .extensions import init_extensions
@@ -7,8 +7,7 @@ from .bills import init_bills
 from .category import init_category  
 from .movement import init_movement
 
-def create_app():
-    app = Flask(__name__)
+def create_app(app):
     app.config.from_object(Config)
 
     init_extensions(app)
@@ -17,5 +16,3 @@ def create_app():
     init_bills(app)
     init_category(app)
     init_movement(app)
-
-    return app
