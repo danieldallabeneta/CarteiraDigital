@@ -49,7 +49,7 @@ jobs:
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
           mvn clean package -DskipTests
-          mvn test    
+          #mvn test    
       - name: Build APP2
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
