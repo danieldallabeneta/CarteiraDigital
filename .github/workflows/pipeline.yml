@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - production
+      - develop
   pull_request:
     branches:
       - main
-      - production
+      - develop
 
 jobs:
   app1:
@@ -17,9 +17,9 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: mydb
+          POSTGRES_USER: ${{ secrets.POSTGRES_LOGIN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
