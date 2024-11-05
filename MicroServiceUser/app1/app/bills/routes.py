@@ -1,4 +1,7 @@
+import os
 from flask import Blueprint, jsonify, request
+from flasgger import swag_from
+
 from .adapters import MongoBillRepository
 from app.category.adapters import MongoCategoryRepository
 from app.core.service import BillService, CategoryService
@@ -11,6 +14,96 @@ category_service = CategoryService(MongoCategoryRepository())
 user_authorization = UserAuthorization()
 
 @bills_bp.route('/add', methods=['POST'])
+@swag_from({
+    'tags': ['Contas'],
+    'summary': 'Adicionar uma nova conta',
+    'description': 'Este endpoint permite adicionar uma nova conta, incluindo detalhes como descrição, valor, data de inclusão, data de vencimento, tipo de conta e usuário associado.',
+    'parameters': [
+        {
+            'name': 'body',
+            'description': 'Dados da conta a ser adicionada',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'description': {
+                        'type': 'string',
+                        'description': 'Descrição da conta',
+                        'required': True
+                    },
+                    'valor_compra': {
+                        'type': 'number',
+                        'description': 'Valor da conta',
+                        'required': True
+                    },
+                    'include_date': {
+                        'type': 'string',
+                        'format': 'date',
+                        'description': 'Data de inclusão da conta',
+                        'required': True
+                    },
+                    'due_date': {
+                        'type': 'string',
+                        'format': 'date',
+                        'description': 'Data de vencimento da conta',
+                        'required': True
+                    },
+                    'type': {
+                        'type': 'integer',
+                        'description': 'Tipo da conta (1: à vista, 2: parcelada)',
+                        'required': True
+                    },
+                    'usuario': {
+                        'type': 'string',
+                        'description': 'Usuário associado à conta',
+                        'required': True
+                    },
+                    'parcela': {
+                        'type': 'integer',
+                        'description': 'Quantidade de parcelas (opcional para contas parceladas)'
+                    },
+                    'category': {
+                        'type': 'string',
+                        'description': 'Categoria da conta (opcional)'
+                    }
+                }
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Conta adicionada com sucesso',
+            'schema': {
+                'type': 'boolean'
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios faltando',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        }
+    }
+})
 def create_bill():
     data = request.json
     type = data.get("type")
@@ -44,6 +137,79 @@ def create_bill():
     return jsonify(True) if bill else jsonify(False), 201
 
 @bills_bp.route('/update', methods=['PUT'])
+@swag_from({
+    'tags': ['Contas'],
+    'summary': 'Atualizar uma conta existente',
+    'description': 'Este endpoint permite atualizar os detalhes de uma conta existente com base no ID fornecido. Os campos atualizáveis incluem descrição, valor, categoria e usuário.',
+    'parameters': [
+        {
+            'name': 'body',
+            'description': 'Dados da conta a ser atualizada',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'id': {
+                        'type': 'string',
+                        'description': 'ID da conta',
+                        'required': True
+                    },
+                    'description': {
+                        'type': 'string',
+                        'description': 'Nova descrição da conta'
+                    },
+                    'valor_compra': {
+                        'type': 'number',
+                        'description': 'Novo valor da conta',
+                        'required': True
+                    },
+                    'category': {
+                        'type': 'string',
+                        'description': 'Nova categoria da conta (opcional)'
+                    },
+                    'usuario': {
+                        'type': 'string',
+                        'description': 'Usuário associado à conta',
+                        'required': True
+                    }
+                }
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Conta atualizada com sucesso',
+            'schema': {
+                'type': 'boolean'
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios faltando ou inválidos',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        }
+    }
+})
 def update_bill():
     data = request.json
     id = data.get('id')
@@ -78,6 +244,84 @@ def update_bill():
     return jsonify(True), 201
 
 @bills_bp.route('/delete', methods=['DELETE'])
+@swag_from({
+    'tags': ['Contas'],
+    'summary': 'Excluir uma conta',
+    'description': 'Este endpoint permite excluir uma conta existente com base no ID fornecido. É necessário o usuário associado para realizar a operação.',
+    'parameters': [
+        {
+            'name': 'body',
+            'description': 'Dados da conta a ser excluída',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'id': {
+                        'type': 'string',
+                        'description': 'ID da conta a ser excluída',
+                        'required': True
+                    },
+                    'usuario': {
+                        'type': 'string',
+                        'description': 'Usuário associado à conta',
+                        'required': True
+                    }
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Conta excluída com sucesso',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'description': 'Mensagem de sucesso'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, campos obrigatórios faltando',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        },
+        404: {
+            'description': 'Conta não encontrada',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        }
+    }
+})
 def delete_bill():
     data = request.json
     id   = data.get('id')
@@ -104,6 +348,103 @@ def delete_bill():
     return jsonify({'message': 'Conta excluída com sucesso'}), 200
 
 @bills_bp.route('/all', methods=['GET'])
+@swag_from({
+    'tags': ['Contas'],
+    'summary': 'Recuperar todas as contas de um usuário',
+    'description': 'Este endpoint permite recuperar todas as contas associadas a um usuário específico. É necessário fornecer o ID do usuário como parâmetro.',
+    'parameters': [
+        {
+            'name': 'usuario',
+            'description': 'ID do usuário cujas contas devem ser recuperadas',
+            'in': 'query',
+            'required': True,
+            'type': 'string'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Contas recuperadas com sucesso',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {
+                            'type': 'string',
+                            'description': 'ID da conta'
+                        },
+                        'nome': {
+                            'type': 'string',
+                            'description': 'Descrição da conta'
+                        },
+                        'valor_compra': {
+                            'type': 'number',
+                            'description': 'Valor da conta'
+                        },
+                        'data_inclusao': {
+                            'type': 'string',
+                            'format': 'date',
+                            'description': 'Data de inclusão da conta'
+                        },
+                        'vencimento': {
+                            'type': 'string',
+                            'format': 'date',
+                            'description': 'Data de vencimento da conta'
+                        },
+                        'forma_pagamento': {
+                            'type': 'string',
+                            'description': 'Forma de pagamento da conta'
+                        },
+                        'parcelas': {
+                            'type': 'integer',
+                            'description': 'Quantidade de parcelas, se aplicável'
+                        },
+                        'usuario': {
+                            'type': 'string',
+                            'description': 'Usuário associado à conta'
+                        },
+                        'valor_parcela': {
+                            'type': 'number',
+                            'description': 'Valor da parcela'
+                        },
+                        'parcela_paga': {
+                            'type': 'boolean',
+                            'description': 'Indica se a parcela foi paga'
+                        },
+                        'categoria': {
+                            'type': 'string',
+                            'description': 'Categoria da conta'
+                        }
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Erro de solicitação, ID do usuário não fornecido',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Usuário não autorizado',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {
+                        'type': 'string',
+                        'description': 'Mensagem de erro de autorização'
+                    }
+                }
+            }
+        }
+    }
+})
 def get_all_by_user():
     usuario = request.args.get('usuario')
 

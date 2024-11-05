@@ -1,4 +1,7 @@
-Flask==2.3.2
+Flask==3.0.3
 pandas==2.2.0
 statsmodels==0.14.3
 requests
+Flasgger==0.9.7.1
+prometheus-client
+werkzeug==3.1.1

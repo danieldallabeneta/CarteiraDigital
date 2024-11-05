@@ -1,4 +1,4 @@
-Flask==2.3.2
+Flask==3.0.3
 pymongo==4.5.0
 flask_pymongo
 requests
@@ -7,3 +7,6 @@ pytest-cov
 pytest-mock
 mock
 Flask-Testing
+Flasgger==0.9.7.1
+prometheus-client
+werkzeug==3.1.1

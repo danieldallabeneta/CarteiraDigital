@@ -1,0 +1,66 @@
+paths:
+  /category/add:
+    post:
+      summary: "Adicionar uma nova categoria"
+      description: "Adiciona uma nova categoria no sistema para o usuário especificado."
+      tags:
+        - "Categoria"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: "Nome da categoria"
+                  example: "Alimentação"
+                usuario:
+                  type: string
+                  description: "Identificador do usuário"
+                  example: "user123"
+              required:
+                - name
+                - usuario
+      responses:
+        '201':
+          description: "Categoria adicionada com sucesso"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Registro inserido com sucesso"
+        '400':
+          description: "Dados de entrada inválidos"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Todos os campos (nome, usuario) são obrigatórios"
+        '401':
+          description: "Usuário não autorizado"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Usuário não autorizado"
+        '404':
+          description: "Falha ao inserir o registro"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Registro não inserido"

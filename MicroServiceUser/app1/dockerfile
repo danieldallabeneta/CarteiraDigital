@@ -15,5 +15,5 @@ ENV FLASK_APP=run.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV PYTHONUNBUFFERED=1
 
-#ENTRYPOINT ["sh", "-c", "pytest && python3 run.py"]
-ENTRYPOINT ["sh", "-c", "pytest --cov=app1 app/tests/ --cov-report=xml --cov-report=html && python3 run.py"]
+ENTRYPOINT ["sh", "-c", "pytest && python3 run.py"]
+#ENTRYPOINT ["sh", "-c", "pytest --cov=app1 app/tests/ --cov-report=xml --cov-report=html && python3 run.py"]
