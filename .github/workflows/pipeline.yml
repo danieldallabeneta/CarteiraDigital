@@ -1,18 +1,105 @@
-name: Docker Image CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - production
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+      - production
 
 jobs:
-
-  build:
-
+  app1:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Build app1
+      run: docker-compose -f docker-compose.yml up -d --build app1
+
+    - name: Run Tests for app1
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      run: docker exec app1 pytest --cov=app tests/
+
+    - name: SonarCloud Scan for app1
+      if: github.ref == 'refs/heads/main'
+      uses: sonarsource/sonarcloud-github-action@v2
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=your_project_key_app1
+          -Dsonar.organization=your_organization
+          -Dsonar.host.url=https://sonarcloud.io
+
+    - name: Deploy to Production
+      if: github.ref == 'refs/heads/production'
+      run: |
+        # Comandos de deploy para produção
+        echo "Deploying app1 to production..."
+
+    - name: Cleanup app1
+      run: docker-compose -f docker-compose.yml down
+
+  app2:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand('ping')'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Build app2
+      run: docker-compose -f docker-compose.yml up -d --build app2
+
+    - name: Run Tests for app2
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      run: docker exec app2 pytest --cov=app tests/
+
+    - name: SonarCloud Scan for app2
+      if: github.ref == 'refs/heads/main'
+      uses: sonarsource/sonarcloud-github-action@v2
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=your_project_key_app2
+          -Dsonar.organization=your_organization
+          -Dsonar.host.url=https://sonarcloud.io
+
+    - name: Deploy to Production
+      if: github.ref == 'refs/heads/production'
+      run: |
+        # Comandos de deploy para produção
+        echo "Deploying app2 to production..."
+
+    - name: Cleanup app2
+      run: docker-compose -f docker-compose.yml down
+
