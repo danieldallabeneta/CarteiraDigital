@@ -29,9 +29,7 @@ jobs:
           --health-retries=5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: List project files
-        run: ls -R  
+        uses: actions/checkout@v4      
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -49,11 +47,11 @@ jobs:
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Run test APP2
         run: |
-          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
+          cd ./MicroServiceUser/MicroServiceUserData
           mvn test    
       - name: Build APP2
         run: |
-          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
+          cd ./MicroServiceUser/MicroServiceUserData
           mvn jacoco:prepare-agent
           mvn jacoco:report
           mvn package -DskipTests
@@ -62,7 +60,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
         run: |
-          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
+          cd ./MicroServiceUser/MicroServiceUserData
           mvn sonar:sonar \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
