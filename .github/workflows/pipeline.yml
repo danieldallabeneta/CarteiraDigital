@@ -47,11 +47,11 @@ jobs:
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Run test APP2
         run: |
-          cd MicroserviceUser/MicroserviceUserData
+          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
           mvn test    
       - name: Build APP2
         run: |
-          cd MicroserviceUser/MicroserviceUserData
+          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
           mvn jacoco:prepare-agent
           mvn jacoco:report
           mvn package -DskipTests
@@ -60,7 +60,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
         run: |
-          cd MicroserviceUser/MicroserviceUserData
+          cd CarteiraDigital/MicroserviceUser/MicroserviceUserData
           mvn sonar:sonar \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
