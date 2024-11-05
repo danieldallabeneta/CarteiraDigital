@@ -27,44 +27,36 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'  
-        
+          java-version: '17'          
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('MicroserviceUser/MicroserviceUserData/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven
-          
+            ${{ runner.os }}-maven          
       - name: Get project version
         id: vars
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-
       - name: Run test APP2
         run: |
           cd MicroserviceUser/MicroserviceUserData
-          mvn test
-    
+          mvn test    
       - name: Build APP2
         run: |
           cd MicroserviceUser/MicroserviceUserData
           mvn jacoco:prepare-agent
           mvn jacoco:report
           mvn package -DskipTests
-
       - name: SonarCloud Scan for APP2
         if: github.ref == 'refs/heads/develop'
-        # uses: sonarsource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
         run: |
@@ -73,19 +65,15 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN
-	
+            -Dsonar.login=$SONAR_TOKEN	
       - name: Log in to Docker Hub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-
       - name: Build Docker image APP2
-        # if: github.ref == 'refs/heads/production'
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }} .
-
       - name: Push Docker image to Docker Hub
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
