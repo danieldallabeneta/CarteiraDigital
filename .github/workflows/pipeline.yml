@@ -11,7 +11,7 @@ on:
       - develop
 
 jobs:
-  app1:
+  app2:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -29,26 +29,49 @@ jobs:
           --health-retries=5
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Build app1
-      run: docker-compose -f docker-compose.yml up -d --build app1
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '17'  
+        
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven
+          
+    - name: Get project version
+      id: vars
+      run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-    - name: Run Tests for app1
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: docker exec app1 pytest --cov=app tests/
+    - name: Run test App2
+      run: |
+        cd app1
+        mvn test
+    
+    - name: Build app2
+      run: |
+          mvn jacoco:prepare-agent
+          mvn jacoco:report
+          mvn package -DskipTests
 
     - name: SonarCloud Scan for app1
-      if: github.ref == 'refs/heads/main'
-      uses: sonarsource/sonarcloud-github-action@v2
+      if: github.ref == 'refs/heads/develop'
+      # uses: sonarsource/sonarcloud-github-action@v2
       env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=your_project_key_app1
-          -Dsonar.organization=your_organization
-          -Dsonar.host.url=https://sonarcloud.io
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
+      run: |
+        mvn sonar:sonar \
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$SONAR_TOKEN
 
     - name: Deploy to Production
       if: github.ref == 'refs/heads/production'
@@ -58,48 +81,3 @@ jobs:
 
     - name: Cleanup app1
       run: docker-compose -f docker-compose.yml down
-
-  app2:
-    runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd="mongosh --eval 'db.adminCommand('ping')'"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Build app2
-      run: docker-compose -f docker-compose.yml up -d --build app2
-
-    - name: Run Tests for app2
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: docker exec app2 pytest --cov=app tests/
-
-    - name: SonarCloud Scan for app2
-      if: github.ref == 'refs/heads/main'
-      uses: sonarsource/sonarcloud-github-action@v2
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=your_project_key_app2
-          -Dsonar.organization=your_organization
-          -Dsonar.host.url=https://sonarcloud.io
-
-    - name: Deploy to Production
-      if: github.ref == 'refs/heads/production'
-      run: |
-        # Comandos de deploy para produção
-        echo "Deploying app2 to production..."
-
-    - name: Cleanup app2
-      run: docker-compose -f docker-compose.yml down
-
