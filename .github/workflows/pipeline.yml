@@ -14,7 +14,7 @@ jobs:
   app2:
     runs-on: ubuntu-latest
     services:
-      postgres:
+      db:
         image: postgres:latest
         env:
           POSTGRES_USER: ${{ secrets.POSTGRES_LOGIN }}
