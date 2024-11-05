@@ -45,12 +45,17 @@ jobs:
       - name: Get project version
         id: vars
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      - name: Wait for PostgreSQL
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          echo "Waiting for PostgreSQL to be available..."
+          ./wait-for-it.sh localhost:5432 --timeout=10 --strict -- echo "PostgreSQL is up"  
       - name: Run test APP2
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
-          mvn clean package -DskipTests
-          cd ./MicroServiceUser/MicroServiceUserData/target
-          java -jar MicroServiceUserData-0.0.1-SNAPSHOT.jar
+          # mvn clean package -DskipTests
+          # cd ./MicroServiceUser/MicroServiceUserData/target
+          # java -jar MicroServiceUserData-0.0.1-SNAPSHOT.jar
           mvn test    
       - name: Build APP2
         run: |
