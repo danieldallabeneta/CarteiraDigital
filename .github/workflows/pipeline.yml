@@ -34,7 +34,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'          
+          java-version: '17'    
+      - name: Setup config
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          mkdir config
+          echo 'spring.datasource.url=jdbc:postgresql://db:5432/microserviceuserdata' > config/application.properties    
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
