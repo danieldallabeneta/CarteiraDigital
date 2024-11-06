@@ -46,7 +46,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           cd ./MicroServiceUser
-          docker-compose -f compose.yml up -d db 
+          docker-compose -f compose.yaml up -d db 
           
       - name: Make wait-for-it executable
         run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
