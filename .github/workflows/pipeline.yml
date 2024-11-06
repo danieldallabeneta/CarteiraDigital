@@ -52,19 +52,20 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('MicroserviceUser/MicroserviceUserData/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven 
-            
+      - name: Make wait-for-it executable
+        run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
+        
+      - name: Wait for PostgreSQL
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          echo "Waiting for PostgreSQL to be available..."
+          ./wait-for-it.sh localhost:5432 --timeout=30 --strict -- echo "PostgreSQL is up"   
+          
       - name: Build with Maven
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
           mvn -B package --file pom.xml          
-      # - name: Make wait-for-it executable
-      #   run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
-        
-      # - name: Wait for PostgreSQL
-      #   run: |
-      #     cd ./MicroServiceUser/MicroServiceUserData
-      #     echo "Waiting for PostgreSQL to be available..."
-      #     ./wait-for-it.sh localhost:5432 --timeout=20 --strict -- echo "PostgreSQL is up" 
+     
           
       - name: Get project version
         id: vars
