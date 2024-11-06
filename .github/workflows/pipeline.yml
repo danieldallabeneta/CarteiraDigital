@@ -48,14 +48,14 @@ jobs:
           cd ./MicroServiceUser
           docker-compose -f compose.yaml up -d db 
           
-      - name: Make wait-for-it executable
-        run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
+      # - name: Make wait-for-it executable
+      #   run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
         
-      - name: Wait for PostgreSQL
-        run: |
-          cd ./MicroServiceUser/MicroServiceUserData
-          echo "Waiting for PostgreSQL to be available..."
-          ./wait-for-it.sh localhost:5432 --timeout=20 --strict -- echo "PostgreSQL is up" 
+      # - name: Wait for PostgreSQL
+      #   run: |
+      #     cd ./MicroServiceUser/MicroServiceUserData
+      #     echo "Waiting for PostgreSQL to be available..."
+      #     ./wait-for-it.sh localhost:5432 --timeout=20 --strict -- echo "PostgreSQL is up" 
           
       - name: Get project version
         id: vars
