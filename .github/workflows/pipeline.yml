@@ -38,6 +38,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven  
             
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose   
+          
       - name: Start services with Docker Compose
         run: |
           docker-compose -f ./MicroServiceUser/compose.yml up -d db 
@@ -94,3 +99,7 @@ jobs:
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
+          
+      - name: Stop services
+        run: |
+          docker-compose -f ./MicroServiceUser/compose.yml down    
