@@ -13,7 +13,22 @@ on:
 jobs:
   app2:
     runs-on: ubuntu-latest
-    
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: admin
+          POSTGRES_USER: admin
+          POSTGRES_DB: microserviceuserdata
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4 
@@ -28,7 +43,7 @@ jobs:
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
           mkdir config
-          echo 'spring.datasource.url=jdbc:postgresql://db:5432/microserviceuserdata' > config/application.properties   
+          echo 'spring.datasource.url=jdbc:postgresql://postgres:5432/microserviceuserdata' > config/application.properties   
           
       - name: Cache Maven packages
         uses: actions/cache@v4
@@ -36,18 +51,12 @@ jobs:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('MicroserviceUser/MicroserviceUserData/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven  
+            ${{ runner.os }}-maven 
             
-      - name: Install Docker Compose
+      - name: Build with Maven
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose   
-          
-      - name: Start services with Docker Compose
-        run: |
-          cd ./MicroServiceUser
-          docker-compose -f compose.yaml up -d db 
-          
+          cd ./MicroServiceUser/MicroServiceUserData
+          mvn -B package --file pom.xml          
       # - name: Make wait-for-it executable
       #   run: chmod +x ./MicroServiceUser/MicroServiceUserData/wait-for-it.sh  
         
@@ -61,10 +70,10 @@ jobs:
         id: vars
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV        
        
-      - name: Run test APP2
-        run: |
-          cd ./MicroServiceUser/MicroServiceUserData
-          mvn test  
+      # - name: Run test APP2
+      #   run: |
+      #     cd ./MicroServiceUser/MicroServiceUserData
+      #     mvn test  
           
       - name: Build APP2
         run: |
@@ -101,6 +110,6 @@ jobs:
           cd ./MicroServiceUser/MicroServiceUserData
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
           
-      - name: Stop services
-        run: |
-          docker-compose -f ./MicroServiceUser/compose.yml down    
+      # - name: Stop services
+      #   run: |
+      #     docker-compose -f ./MicroServiceUser/compose.yml down    
