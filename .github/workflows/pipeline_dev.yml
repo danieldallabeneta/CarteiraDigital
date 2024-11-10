@@ -1,0 +1,67 @@
+name: Pipeline_dev
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  app1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13.0'
+        
+      - name: Extract Version
+        id: get_version
+        run: |
+          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          cd ./MicroServiceUser/app1
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage
+          
+      - name: Run tests with coverage
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          coverage run -m pytest
+          coverage xml -o coverage.xml
+      
+      - name: SonarCloud Scan for APP1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
+        run: |
+          cd ./MicroServiceUser/app1
+          sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP1 }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.python.coverage.reportPaths=coverage.xml	
+            
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+        
+      - name: Build Docker image APP1
+        run: |
+          cd ./MicroServiceUser/app1
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
+          
+      - name: Push Docker image to Docker Hub
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
