@@ -35,16 +35,20 @@ jobs:
         run: |
           cd ./MicroServiceUser/app1
           python -m pip install --upgrade pip
-          pip install sonar scanner
+          pip install sonar-scanner
           pip install -r requirements.txt
-          #pip install coverage
-          
+       
+      - name: Install SonarScanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+          unzip sonar-scanner.zip
+          mv sonar-scanner-4.6.2.2472-linux sonar-scanner
+          export PATH="${PATH}:${PWD}/sonar-scanner/bin"
+
       - name: Run tests with coverage
         run: |
           cd ./MicroServiceUser/app1
-          pytest -v  --cov --cov-report=xml --cov-report=html
-          #coverage run -m pytest
-          #coverage xml -o coverage.xml
+          pytest -v  --cov=. --cov-report=xml:coverage.xml --cov-report=html
       
       - name: SonarCloud Scan for APP1
         env:
@@ -56,6 +60,7 @@ jobs:
               -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
               -Dsonar.sources=. \
               -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.python.coverage.reportPaths=coverage.xml \
               -Dsonar.login=$SONAR_TOKEN
 
       # - name: Log in to Docker Hub
