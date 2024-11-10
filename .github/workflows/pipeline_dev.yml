@@ -29,8 +29,11 @@ jobs:
       - name: Extract Version
         id: get_version
         run: |
-          cd ./MicroServiceUser/app1
-          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./__version__.py)" >> $GITHUB_ENV
+          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
+      
+      - name: Show version
+        run: |
+          echo "Version is $VERSION"
 
       - name: Install dependencies
         run: |
