@@ -38,6 +38,12 @@ jobs:
           coverage run -m pytest
           coverage xml -o coverage.xml
       
+      - name: Download and install Sonar Scanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+          unzip sonar-scanner-cli-4.7.0.2747-linux.zip
+          export PATH="$PATH:${PWD}/sonar-scanner-4.7.0.2747-linux/bin"
+
       - name: SonarCloud Scan for APP1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
