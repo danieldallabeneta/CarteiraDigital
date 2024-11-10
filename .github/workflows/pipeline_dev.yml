@@ -34,7 +34,7 @@ jobs:
           
       - name: Run tests with coverage
         run: |
-          cd ./MicroServiceUser/MicroServiceUserData
+          cd ./MicroServiceUser/app1
           coverage run -m pytest
           coverage xml -o coverage.xml
       
