@@ -55,6 +55,7 @@ jobs:
       - name: SonarCloud Scan for APP1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
         run: |
           cd ./MicroServiceUser/app1
             sonar-scanner \
