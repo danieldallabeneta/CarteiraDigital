@@ -30,13 +30,7 @@ jobs:
         id: get_version
         run: |
           cd ./MicroServiceUser/app1
-          VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./__version__.py)
-          if [ -z "$VERSION" ]; then
-            echo "Error: Version not found in __version__.py"
-            exit 1
-          fi
-          echo "VERSION=$VERSION"
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./__version__.py)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -48,7 +42,6 @@ jobs:
         run: |
           cd ./MicroServiceUser/app1
           pytest -v --cov=./ --cov-report=xml --cov-report=html
-          #pytest --cov=app1 app/tests/ --cov-report=xml --cov-report=html
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
@@ -71,9 +64,9 @@ jobs:
       - name: Build Docker image APP1
         run: |
           cd ./MicroServiceUser/app1
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.version }} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
           
       - name: Push Docker image to Docker Hub
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.version }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
