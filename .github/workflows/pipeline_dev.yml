@@ -35,7 +35,6 @@ jobs:
         run: |
           cd ./MicroServiceUser/app1
           python -m pip install --upgrade pip
-          pip install sonar-scanner
           pip install -r requirements.txt
        
       - name: Install SonarScanner
