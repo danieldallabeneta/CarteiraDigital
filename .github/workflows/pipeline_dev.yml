@@ -29,7 +29,11 @@ jobs:
       - name: Extract Version
         id: get_version
         run: |
-          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
+          #echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
+          VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)
+          echo "VERSION=$VERSION"
+          # Passa a versão para a variável de ambiente
+          echo "version=$VERSION" >> $GITHUB_ENV 
 
       - name: Install dependencies
         run: |
@@ -58,28 +62,18 @@ jobs:
         uses: sonarsource/sonarcloud-github-action@master
         with:
           args: >
-            -Dsonar.projectKey=danieldallabeneta20242_app1
-            -Dsonar.organization=danieldallabeneta20242
+            # -Dsonar.projectKey=danieldallabeneta20242_app1
+            # -Dsonar.organization=danieldallabeneta20242
+            # -Dsonar.projectBaseDir=./MicroServiceUser/app1
+            # -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}}
+            -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}}
             -Dsonar.projectBaseDir=./MicroServiceUser/app1
             -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-      # - name: SonarCloud Scan for APP1
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-      #     JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
-      #     PATH: ${SONAR_SCANNER_PATH}:${PATH}
-      #   run: |
-      #     cd ./MicroServiceUser/app1
-      #       sonar-scanner \
-      #         -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}} \
-      #         -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
-      #         -Dsonar.sources=. \
-      #         -Dsonar.host.url=https://sonarcloud.io \
-      #         -Dsonar.python.coverage.reportPaths=coverage.xml \
-      #         -Dsonar.login=$SONAR_TOKEN
-
+      
       - name: Log in to Docker Hub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -89,9 +83,9 @@ jobs:
       - name: Build Docker image APP1
         run: |
           cd ./MicroServiceUser/app1
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.version }} .
           
       - name: Push Docker image to Docker Hub
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.version }}
