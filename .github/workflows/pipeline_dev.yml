@@ -37,36 +37,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
        
-      - name: Install SonarScanner
-        run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
-          unzip sonar-scanner.zip
-          mv sonar-scanner-4.6.2.2472-linux sonar-scanner
-          echo "SONAR_SCANNER_PATH=${PWD}/sonar-scanner/bin" >> $GITHUB_ENV
-          echo "PATH=${PWD}/sonar-scanner/bin:${PATH}" >> $GITHUB_ENV
+      # - name: Install SonarScanner
+      #   run: |
+      #     curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+      #     unzip sonar-scanner.zip
+      #     mv sonar-scanner-4.6.2.2472-linux sonar-scanner
+      #     echo "SONAR_SCANNER_PATH=${PWD}/sonar-scanner/bin" >> $GITHUB_ENV
+      #     echo "PATH=${PWD}/sonar-scanner/bin:${PATH}" >> $GITHUB_ENV
       
-      - name: Confirm SonarScanner installation
-        run: sonar-scanner -v
+      # - name: Confirm SonarScanner installation
+      #   run: sonar-scanner -v
           
       - name: Run tests with coverage
         run: |
           cd ./MicroServiceUser/app1
-          pytest -v  --cov=. --cov-report=xml:coverage.xml --cov-report=html
-      
-      - name: SonarCloud Scan for APP1
+          pytest --cov=./ --cov-report=xml --doctest-modules
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
-          PATH: ${SONAR_SCANNER_PATH}:${PATH}
-        run: |
-          cd ./MicroServiceUser/app1
-            sonar-scanner \
-              -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}} \
-              -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.python.coverage.reportPaths=coverage.xml \
-              -Dsonar.login=$SONAR_TOKEN
+      # - name: SonarCloud Scan for APP1
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
+      #     JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
+      #     PATH: ${SONAR_SCANNER_PATH}:${PATH}
+      #   run: |
+      #     cd ./MicroServiceUser/app1
+      #       sonar-scanner \
+      #         -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}} \
+      #         -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
+      #         -Dsonar.sources=. \
+      #         -Dsonar.host.url=https://sonarcloud.io \
+      #         -Dsonar.python.coverage.reportPaths=coverage.xml \
+      #         -Dsonar.login=$SONAR_TOKEN
 
       # - name: Log in to Docker Hub
       #   env:
