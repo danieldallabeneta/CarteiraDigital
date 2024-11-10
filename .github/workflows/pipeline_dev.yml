@@ -56,6 +56,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
         run: |
+          export JAVA_HOME="/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64"
+          $JAVA_HOME/bin/java -version
           cd ./MicroServiceUser/app1
           sonar-scanner \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP1 }} \
