@@ -56,6 +56,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
+          PATH: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64/bin:${PATH}
         run: |
           cd ./MicroServiceUser/app1
             sonar-scanner \
