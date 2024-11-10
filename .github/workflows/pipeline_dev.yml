@@ -29,7 +29,7 @@ jobs:
       - name: Extract Version
         id: get_version
         run: |
-          #echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
+          
           VERSION=$(grep -oP '(?<=__version__ = ")[0-9]+\.[0-9]+\.[0-9]+' ./MicroServiceUser/app1/__version__.py)
           if [ -z "$VERSION" ]; then
             echo "Error: Version not found in __version__.py"
@@ -53,11 +53,7 @@ jobs:
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         with:
-          args: >
-            # -Dsonar.projectKey=danieldallabeneta20242_app1
-            # -Dsonar.organization=danieldallabeneta20242
-            # -Dsonar.projectBaseDir=./MicroServiceUser/app1
-            # -Dsonar.python.coverage.reportPaths=coverage.xml
+          args: >           
             -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}}
             -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}}
             -Dsonar.projectBaseDir=./MicroServiceUser/app1
