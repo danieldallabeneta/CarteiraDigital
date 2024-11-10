@@ -54,17 +54,16 @@ jobs:
       - name: SonarCloud Scan for APP1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
+          #JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
         run: |
-          export JAVA_HOME="/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64"
-          $JAVA_HOME/bin/java -version
+          #export JAVA_HOME="/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64"
+          #$JAVA_HOME/bin/java -version
           cd ./MicroServiceUser/app1
           sonar-scanner \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP1 }} \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.python.coverage.reportPaths=coverage.xml	
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io 
             
       - name: Log in to Docker Hub
         env:
