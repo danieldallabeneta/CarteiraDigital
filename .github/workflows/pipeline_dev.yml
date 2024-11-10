@@ -45,39 +45,30 @@ jobs:
           #coverage run -m pytest
           #coverage xml -o coverage.xml
       
-      - name: Download and install Sonar Scanner
-        run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
-          unzip sonar-scanner.zip -d $HOME
-          export PATH="$HOME/sonar-scanner-4.7.0.2747-linux/bin:$PATH"
-          echo "$HOME/sonar-scanner-4.7.0.2747-linux/bin" >> $GITHUB_PATH
-
       - name: SonarCloud Scan for APP1
-        uses: sonarsource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN}}
-          #JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
-        #run: |
-          #cd ./MicroServiceUser/app1
-          #sonar-scanner \
-            #-Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP1 }} \
-            #-Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            #$-Dsonar.sources=. \
-            #-Dsonar.host.url=https://sonarcloud.io 
-            
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-        
-      - name: Build Docker image APP1
         run: |
           cd ./MicroServiceUser/app1
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
+            sonar-scanner \
+              -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP1}} \
+              -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.login=$SONAR_TOKEN
+
+      # - name: Log in to Docker Hub
+      #   env:
+      #     DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #   run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+        
+      # - name: Build Docker image APP1
+      #   run: |
+      #     cd ./MicroServiceUser/app1
+      #     docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
           
-      - name: Push Docker image to Docker Hub
-        run: |
-          cd ./MicroServiceUser/MicroServiceUserData
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
+      # - name: Push Docker image to Docker Hub
+      #   run: |
+      #     cd ./MicroServiceUser/MicroServiceUserData
+      #     docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
