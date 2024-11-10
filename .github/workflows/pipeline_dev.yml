@@ -30,27 +30,19 @@ jobs:
         id: get_version
         run: |
           #echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
-          VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)
+          VERSION=$(grep -oP '(?<=__version__ = ")[0-9]+\.[0-9]+\.[0-9]+' ./MicroServiceUser/app1/__version__.py)
+          if [ -z "$VERSION" ]; then
+            echo "Error: Version not found in __version__.py"
+            exit 1
+          fi
           echo "VERSION=$VERSION"
-          # Passa a versão para a variável de ambiente
-          echo "version=$VERSION" >> $GITHUB_ENV 
+          echo "version=$VERSION" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
           cd ./MicroServiceUser/app1
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-       
-      # - name: Install SonarScanner
-      #   run: |
-      #     curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
-      #     unzip sonar-scanner.zip
-      #     mv sonar-scanner-4.6.2.2472-linux sonar-scanner
-      #     echo "SONAR_SCANNER_PATH=${PWD}/sonar-scanner/bin" >> $GITHUB_ENV
-      #     echo "PATH=${PWD}/sonar-scanner/bin:${PATH}" >> $GITHUB_ENV
-      
-      # - name: Confirm SonarScanner installation
-      #   run: sonar-scanner -v
           
       - name: Run tests with coverage
         run: |
