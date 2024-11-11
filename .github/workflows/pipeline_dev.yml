@@ -156,6 +156,7 @@ jobs:
       
       - name: Sonar 
         run: |
+          cd ./MicroServiceUser/MicroServiceUserData
           mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP2}}
           
       # - name: SonarCloud Scan
