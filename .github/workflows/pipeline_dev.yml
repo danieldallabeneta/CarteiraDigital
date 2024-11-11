@@ -154,20 +154,15 @@ jobs:
           mvn jacoco:report
           mvn package -DskipTests
       
-      # - name: Sonar 
+      # - name: SonarCloud Scan
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
       #   run: |
-      #     cd ./MicroServiceUser/MicroServiceUserData
-      #     mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY_APP2}}
-
-      - name: SonarCloud Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
-        run: |
-          mvn sonar:sonar \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN
+      #     mvn sonar:sonar \
+      #       -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_APP2 }} \
+      #       -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+      #       -Dsonar.host.url=https://sonarcloud.io \
+      #       -Dsonar.login=$SONAR_TOKEN
 
       # - name: SonarCloud Scan
       #   uses: sonarsource/sonarcloud-github-action@master
@@ -181,19 +176,19 @@ jobs:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
             
-      # - name: Log in to Docker Hub
-      #   env:
-      #     DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      #   run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
         
-      # - name: Build Docker image APP2
-      #   run: |
-      #     cd ./MicroServiceUser/MicroServiceUserData
-      #     docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }} .
+      - name: Build Docker image APP2
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }} .
           
-      # - name: Push Docker image to Docker Hub
-      #   run: |
-      #     cd ./MicroServiceUser/MicroServiceUserData
-      #     docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
+      - name: Push Docker image to Docker Hub
+        run: |
+          cd ./MicroServiceUser/MicroServiceUserData
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
        
