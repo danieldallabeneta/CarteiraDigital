@@ -19,11 +19,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.13.0'
-
-      - name: Extract Version
-        id: get_version
-        run: |
-          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app1/__version__.py)" >> $GITHUB_ENV
       
       - name: Install dependencies
         run: |
@@ -46,23 +41,7 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}
-      
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-        
-      - name: Build Docker image APP1
-        run: |
-          cd ./MicroServiceUser/app1
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }} .
-          
-      - name: Push Docker image to Docker Hub
-        run: |
-          cd ./MicroServiceUser/app1
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app1:${{ env.VERSION }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP1 }}      
     
   app3:
     runs-on: ubuntu-latest
@@ -74,11 +53,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.13.0'
-
-      - name: Extract Version
-        id: get_version
-        run: |
-          echo "VERSION=$(grep -oP "(?<=__version__ = \")\d+\.\d+\.\d+" ./MicroServiceUser/app3/__version__.py)" >> $GITHUB_ENV
       
       - name: Install dependencies
         run: |
@@ -103,22 +77,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP3 }}
       
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-        
-      - name: Build Docker image APP3
-        run: |
-          cd ./MicroServiceUser/app3
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app3:${{ env.VERSION }} .
-          
-      - name: Push Docker image to Docker Hub
-        run: |
-          cd ./MicroServiceUser/app3
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app3:${{ env.VERSION }}
-
   app2:
     runs-on: ubuntu-latest
     steps:
@@ -138,11 +96,7 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('MicroserviceUser/MicroserviceUserData/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven 
-       
-      - name: Get project version
-        id: vars
-        run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV        
-       
+      
       # - name: Run test APP2
       #   run: |
       #     cd ./MicroServiceUser/MicroServiceUserData
@@ -176,20 +130,5 @@ jobs:
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APP2 }}
-            
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-        
-      - name: Build Docker image APP2
-        run: |
-          cd ./MicroServiceUser/MicroServiceUserData
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }} .
-          
-      - name: Push Docker image to Docker Hub
-        run: |
-          cd ./MicroServiceUser/MicroServiceUserData
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/app2:${{ env.VERSION }}
+      
        
