@@ -28,7 +28,7 @@ jobs:
        
       - name: Set Swagger
         run: |
-          cd app
+          cd ./MicroServiceUser/app1/app
           echo "SWAGGER_ENABLED=true" >> $GITHUB_ENV
 
       - name: Run tests with coverage
@@ -67,7 +67,7 @@ jobs:
       
       - name: Set Swagger
         run: |
-          cd projectionService
+          cd ./MicroServiceUser/app3/projectionService
           echo "SWAGGER_ENABLED=true" >> $GITHUB_ENV
 
       - name: Run tests with coverage
