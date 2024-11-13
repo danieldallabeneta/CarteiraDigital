@@ -10,4 +10,4 @@ WORKDIR /app2
 
 RUN mvn clean package -DskipTests
 
-CMD [ "java", "-jar",  "/app2/target/MicroServiceUserData-1.0.1.jar"]
+CMD [ "java", "-jar",  "/app2/target/MicroServiceUserData-1.0.1-SNAPSHOT.jar"]
