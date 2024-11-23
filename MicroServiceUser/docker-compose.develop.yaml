@@ -5,64 +5,56 @@ services:
     secrets:
       - postgres-password
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data/develop:/var/lib/postgresql/data
     networks:
-      - microservicewallet
+      - microservicewallet_dev
     environment:
-      - POSTGRES_DB=microserviceuserdata
+      - POSTGRES_DB=microserviceuserdata_dev
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
 
   app2:
-    build: 
-      context: MicroServiceUserData
-      target: builder
+    image: danieldallabeneta/app2:1
     environment:
-      - POSTGRES_DB=microserviceuserdata  
+      - POSTGRES_DB=microserviceuserdata_dev  
+      - POSTGRES_LOGIN=postgres
       - SWAGGER_ENABLED=true
     depends_on:
-      - db 
-    command: ["./wait-for-it.sh", "postgres:5432", "--", "java", "-jar",  "/app2/target/MicroServiceUserData-1.0.1-SNAPSHOT.jar"]    
+      - db
     networks:
-      - microservicewallet
+      - microservicewallet_dev
     ports:
-      - "8100:8080"
+      - "8100:8100"    
 
   mongo:
     image: mongo:latest
     volumes:
-      - ./mongo-data:/data/db 
+      - ./mongo-data/develop:/data/db 
     networks:
-      - microservicewallet
+      - microservicewallet_dev
       
   app1:
-    build:
-      context: app1
-      target: builder
+    image: danieldallabeneta/app1:1.0.0
     environment:
       - SWAGGER_ENABLED=true
-    volumes:
-      - ./app1:/src
     depends_on:
       - mongo
       - app2
     networks:
-      - microservicewallet
+      - microservicewallet_dev
     ports:
-      - "5050:5000"
+      - "5050:5050"
 
   app3:
-    build:
-      context: app3
-      target: builder 
+    image: danieldallabeneta/app3:1.0.0
     environment:
       - SWAGGER_ENABLED=true
     depends_on:
       - app1
       - app2  
     networks:
-      - microservicewallet 
+      - microservicewallet_dev 
     ports:
-      - "5100:5010"     
+      - "5100:5100"     
   
   # gateway:
   #   image: nginx:latest
@@ -83,4 +75,4 @@ secrets:
   postgres-password:
     file: postgres/password.txt
 networks:
-  microservicewallet:
+  microservicewallet_dev:
