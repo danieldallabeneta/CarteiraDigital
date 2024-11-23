@@ -23,7 +23,7 @@ services:
     networks:
       - microservicewallet_dev
     ports:
-      - "8100:8100"    
+      - "8081:8080"    
 
   mongo:
     image: mongo:latest
@@ -42,7 +42,7 @@ services:
     networks:
       - microservicewallet_dev
     ports:
-      - "5050:5050"
+      - "5050:5000"
 
   app3:
     image: danieldallabeneta/app3:1.0.0
@@ -54,7 +54,7 @@ services:
     networks:
       - microservicewallet_dev 
     ports:
-      - "5100:5100"     
+      - "5011:5010"
   
   # gateway:
   #   image: nginx:latest
