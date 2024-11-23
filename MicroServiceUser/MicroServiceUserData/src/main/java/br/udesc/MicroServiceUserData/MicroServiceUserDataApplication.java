@@ -16,7 +16,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
 @Configuration
-@ConditionalOnProperty(name = "swagger.enabled", havingValue = "true", matchIfMissing = false)
 @EnableJpaRepositories(basePackages = "br.udesc.MicroServiceUserData.jpa")
 public class MicroServiceUserDataApplication {
 
@@ -41,6 +40,7 @@ public class MicroServiceUserDataApplication {
     }
     
     @Bean
+    @ConditionalOnProperty(name = "swagger.enabled", havingValue = "true", matchIfMissing = false)
     public OpenAPI customApi(){
         return new OpenAPI().info(new Info().title("Test Swagger Maven APi").version("1.0.0").license(new License().name("Licença do Sistema").url("www.daniel.com")));
     }
