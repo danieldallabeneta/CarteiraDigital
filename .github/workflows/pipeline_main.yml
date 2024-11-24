@@ -84,15 +84,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'   
-          
-    #   - name: Cache Maven packages
-    #     uses: actions/cache@v4
-    #     with:
-    #       path: ~/.m2/repository
-    #       key: ${{ runner.os }}-maven-${{ hashFiles('MicroserviceUser/MicroserviceUserData/pom.xml') }}
-    #       restore-keys: |
-    #         ${{ runner.os }}-maven 
-       
+              
       - name: Get project version
         id: vars
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV        
