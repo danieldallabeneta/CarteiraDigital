@@ -121,7 +121,8 @@ jobs:
         run: |
           cd ./MicroServiceUser/MicroServiceUserData
           mvn jacoco:prepare-agent
-          mvn jacoco:report          
+          mvn jacoco:report   
+          mvn clean verify -DskipTests
       
       # - name: SonarCloud Scan
       #   uses: sonarsource/sonarcloud-github-action@master
